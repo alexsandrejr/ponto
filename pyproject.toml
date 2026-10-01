@@ -1,0 +1,17 @@
+[project]
+name = "ponto"
+version = "1.0.0"
+description = "Gerador de horário de ponto"
+requires-python = ">=3.10"
+dependencies = [
+  "flet==1.0.3",
+]
+
+[tool.flet]
+org = "com.ponto"
+product = "Ponto"
+company = "Alexsandre JR"
+copyright = "Copyright (C) 2026 Alexsandre JR"
+
+[tool.flet.app]
+path = "src"
