@@ -12,6 +12,7 @@ org = "com.ponto"
 product = "Ponto"
 company = "Alexsandre JR"
 copyright = "Copyright (C) 2026 Alexsandre JR"
+icon_background = "#3949AB"
 
 [tool.flet.app]
 path = "src"
