@@ -5,9 +5,13 @@ App Android feito em Python com [Flet](https://flet.dev) que gera horários de p
 ## Regras
 
 - **Entrada:** entre 06:55 e 07:15.
-- **Saída almoço:** 12:00 ± 10 min.
-- **Almoço:** de 1h00 a 1h10.
-- **Saída:** fecha 9h trabalhadas de segunda a quinta e 8h na sexta, com variação de ± 10 min (sem contar o almoço).
+- **Saída almoço:** entre 11:55 e 12:10.
+- **Almoço:** de 1h00 a 1h10, então o retorno nunca fica antes de 12:55.
+- **Saída:** fecha 9h trabalhadas de segunda a quinta e 8h na sexta, com variação de ± 10 min (sem contar o almoço). De segunda a quinta, a saída nunca fica antes de 16:55.
+
+O app abre com a data de hoje. Tocando na data dá para escolher outro dia no calendário, e a jornada segue o dia escolhido. O botão "Voltar para hoje" retorna à data automática.
+
+Os horários mínimos (06:55, 11:55, 12:55 e 16:55) seguem a orientação do RH: o ponto nunca é batido antes deles.
 
 ## Rodar e gerar o APK
 
