@@ -34,8 +34,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -69,7 +67,8 @@ private val SECOES = listOf(
         listOf(Campo.SAIDA_ALMOCO_MIN, Campo.SAIDA_ALMOCO_MAX, Campo.ALMOCO_MIN, Campo.ALMOCO_MAX, Campo.RETORNO_MIN),
     ),
     Secao("Jornada", Icons.Outlined.WorkOutline, listOf(Campo.JORNADA_SEMANA, Campo.JORNADA_SEXTA, Campo.VARIACAO)),
-    Secao("Saída mínima", Icons.AutoMirrored.Filled.Logout, listOf(Campo.SAIDA_MIN_SEMANA)),
+    Secao("Saída · segunda a quinta", Icons.AutoMirrored.Filled.Logout, listOf(Campo.SAIDA_MIN_SEMANA, Campo.SAIDA_MAX_SEMANA)),
+    Secao("Saída · sexta", Icons.AutoMirrored.Filled.Logout, listOf(Campo.SAIDA_MIN_SEXTA, Campo.SAIDA_MAX_SEXTA)),
 )
 
 /**
@@ -106,15 +105,12 @@ fun TelaConfig(
 ) {
     val textos = remember { mutableStateMapOf<Campo, String>().apply { Campo.entries.forEach { put(it, textoDoCampo(it, cfg)) } } }
     val erros = remember { mutableStateMapOf<Campo, String>() }
-    var sextaAtiva by remember { mutableStateOf(cfg.saidaMinSextaAtiva) }
     var confirmarRestauracao by remember { mutableStateOf(false) }
 
     fun lerFormulario(): Config? {
         erros.clear()
-        var novo = cfg.copy(saidaMinSextaAtiva = sextaAtiva)
+        var novo = cfg
         for (campo in Campo.entries) {
-            // Com a opção da sexta desligada, o campo dela não é conferido
-            if (campo == Campo.SAIDA_MIN_SEXTA && !sextaAtiva) continue
             val texto = textos[campo].orEmpty()
             val valor = if (campo.tipo == Tipo.HORA) lerHhmm(texto) else texto.toIntOrNull()
             if (valor == null) {
@@ -160,22 +156,6 @@ fun TelaConfig(
             SECOES.forEach { secao ->
                 CartaoSecao(secao.titulo, secao.icone) {
                     LinhasDeCampos(secao.campos, textos, erros)
-                    if (secao.campos.contains(Campo.SAIDA_MIN_SEMANA)) {
-                        // Saída mínima da sexta: opcional, desligada por padrão
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Switch(
-                                checked = sextaAtiva,
-                                onCheckedChange = {
-                                    sextaAtiva = it
-                                    erros.remove(Campo.SAIDA_MIN_SEXTA)
-                                },
-                                colors = SwitchDefaults.colors(checkedTrackColor = Cor),
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text("Usar saída mínima na sexta", fontSize = 15.sp, color = Cinza900)
-                        }
-                        LinhasDeCampos(listOf(Campo.SAIDA_MIN_SEXTA), textos, erros, habilitado = sextaAtiva)
-                    }
                 }
             }
 
@@ -217,7 +197,6 @@ fun TelaConfig(
                     onRestaurar()
                     Campo.entries.forEach { textos[it] = textoDoCampo(it, Config.PADRAO) }
                     erros.clear()
-                    sextaAtiva = Config.PADRAO.saidaMinSextaAtiva
                 }) { Text("Restaurar") }
             },
             dismissButton = {
@@ -248,7 +227,6 @@ private fun LinhasDeCampos(
     campos: List<Campo>,
     textos: SnapshotStateMap<Campo, String>,
     erros: SnapshotStateMap<Campo, String>,
-    habilitado: Boolean = true,
 ) {
     campos.chunked(2).forEach { par ->
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -268,7 +246,6 @@ private fun LinhasDeCampos(
                     isError = campo in erros,
                     supportingText = erros[campo]?.let { { Text(it) } },
                     singleLine = true,
-                    enabled = habilitado,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f),
                 )

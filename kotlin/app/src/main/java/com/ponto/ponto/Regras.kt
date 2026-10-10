@@ -55,11 +55,11 @@ enum class Campo(
     JORNADA_SEMANA("jornada_semana", "Segunda a quinta", Tipo.HORA, { it.jornadaSemana }, { c, v -> c.copy(jornadaSemana = v) }),
     JORNADA_SEXTA("jornada_sexta", "Sexta", Tipo.HORA, { it.jornadaSexta }, { c, v -> c.copy(jornadaSexta = v) }),
     VARIACAO("variacao", "Variação (±)", Tipo.MINUTOS, { it.variacao }, { c, v -> c.copy(variacao = v) }),
-    SAIDA_MIN_SEMANA("saida_min_semana", "Segunda a quinta", Tipo.HORA, { it.saidaMinSemana }, { c, v -> c.copy(saidaMinSemana = v) }),
-    SAIDA_MIN_SEXTA("saida_min_sexta", "Sexta", Tipo.HORA, { it.saidaMinSexta }, { c, v -> c.copy(saidaMinSexta = v) }),
+    SAIDA_MIN_SEMANA("saida_min_semana", "Mínima", Tipo.HORA, { it.saidaMinSemana }, { c, v -> c.copy(saidaMinSemana = v) }),
+    SAIDA_MAX_SEMANA("saida_max_semana", "Máxima", Tipo.HORA, { it.saidaMaxSemana }, { c, v -> c.copy(saidaMaxSemana = v) }),
+    SAIDA_MIN_SEXTA("saida_min_sexta", "Mínima", Tipo.HORA, { it.saidaMinSexta }, { c, v -> c.copy(saidaMinSexta = v) }),
+    SAIDA_MAX_SEXTA("saida_max_sexta", "Máxima", Tipo.HORA, { it.saidaMaxSexta }, { c, v -> c.copy(saidaMaxSexta = v) }),
 }
-
-private const val CHAVE_SEXTA_ATIVA = "saida_min_sexta_ativa"
 
 /** Regras de geração. Horários e durações em minutos. */
 data class Config(
@@ -74,18 +74,17 @@ data class Config(
     val jornadaSexta: Int = 8 * 60,
     val variacao: Int = 10, // ±10 min na jornada
     val saidaMinSemana: Int = 16 * 60 + 55, // 16:55 (mínimo do RH)
-    val saidaMinSextaAtiva: Boolean = false,
-    val saidaMinSexta: Int = 15 * 60 + 55,
+    val saidaMaxSemana: Int = 17 * 60 + 10, // 17:10
+    val saidaMinSexta: Int = 15 * 60 + 55, // 15:55
+    val saidaMaxSexta: Int = 16 * 60 + 10, // 16:10
 ) {
     private fun ehSexta(dia: LocalDate) = dia.dayOfWeek == DayOfWeek.FRIDAY
 
     fun jornada(dia: LocalDate): Int = if (ehSexta(dia)) jornadaSexta else jornadaSemana
 
-    fun saidaMinima(dia: LocalDate): Int? = when {
-        !ehSexta(dia) -> saidaMinSemana
-        saidaMinSextaAtiva -> saidaMinSexta
-        else -> null
-    }
+    /** Faixa permitida para a saída no dia. */
+    fun saida(dia: LocalDate): IntRange =
+        if (ehSexta(dia)) saidaMinSexta..saidaMaxSexta else saidaMinSemana..saidaMaxSemana
 
     /** Erros por campo; vazio quando tudo está certo. */
     fun validar(): Map<Campo, String> {
@@ -102,6 +101,10 @@ data class Config(
         if (jornadaSemana !in 60..16 * 60) erros[Campo.JORNADA_SEMANA] = "Entre 01:00 e 16:00"
         if (jornadaSexta !in 60..16 * 60) erros[Campo.JORNADA_SEXTA] = "Entre 01:00 e 16:00"
         if (variacao !in 0..60) erros[Campo.VARIACAO] = "Entre 0 e 60 min"
+        if (saidaMaxSemana <= saidaMinSemana) erros[Campo.SAIDA_MAX_SEMANA] = "Precisa ser depois da mínima"
+        if (saidaMaxSexta <= saidaMinSexta) erros[Campo.SAIDA_MAX_SEXTA] = "Precisa ser depois da mínima"
+        if (saidaMinSemana <= retornoMin) erros[Campo.SAIDA_MIN_SEMANA] = "Precisa ser depois do retorno"
+        if (saidaMinSexta <= retornoMin) erros[Campo.SAIDA_MIN_SEXTA] = "Precisa ser depois do retorno"
         return erros
     }
 
@@ -109,7 +112,6 @@ data class Config(
     fun paraJson(): String {
         val json = JSONObject()
         Campo.entries.forEach { json.put(it.chave, it.ler(this)) }
-        json.put(CHAVE_SEXTA_ATIVA, saidaMinSextaAtiva)
         return json.toString()
     }
 
@@ -129,8 +131,6 @@ data class Config(
                 val valor = json.opt(campo.chave)
                 if (valor is Int) cfg = campo.gravar(cfg, valor)
             }
-            val ativa = json.opt(CHAVE_SEXTA_ATIVA)
-            if (ativa is Boolean) cfg = cfg.copy(saidaMinSextaAtiva = ativa)
             return if (cfg.validar().isEmpty()) cfg else PADRAO
         }
     }
@@ -156,8 +156,13 @@ fun gerarHorario(dia: LocalDate, cfg: Config = Config.PADRAO, random: Random = R
     // Jornada = manhã + tarde (sem o almoço)
     val manha = saidaAlmoco - entrada
     val base = cfg.jornada(dia)
-    // Encurta a variação para baixo quando a saída cairia antes do mínimo
-    val piso = cfg.saidaMinima(dia)?.let { it - retorno + manha }
-    val jornada = sortear(base - cfg.variacao, base + cfg.variacao, piso, random)
+    // Jornadas que deixam a saída dentro da faixa mínima-máxima do dia.
+    // A faixa da saída vence a jornada: se a jornada levaria a saída para fora dela,
+    // a saída fica no limite e a jornada do dia aumenta ou diminui um pouco.
+    val permitida = cfg.saida(dia).let { (it.first - retorno + manha)..(it.last - retorno + manha) }
+    val jornada = random.nextInt(
+        (base - cfg.variacao).coerceIn(permitida),
+        (base + cfg.variacao).coerceIn(permitida) + 1,
+    )
     return Horario(entrada, saidaAlmoco, retorno, retorno + jornada - manha)
 }

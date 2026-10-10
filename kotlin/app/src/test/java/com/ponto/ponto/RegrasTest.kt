@@ -29,26 +29,28 @@ class RegrasTest {
         assertEquals(h("06:55")..h("07:15"), f.entrada)
         assertEquals(h("11:55")..h("12:10"), f.saidaAlmoco)
         assertEquals(h("12:55")..h("13:20"), f.retorno)
-        assertEquals(h("16:55")..h("17:35"), f.saida)
-        assertEquals(530..550, f.jornada)
+        assertEquals(h("16:55")..h("17:10"), f.saida)
+        // A faixa da saída vence a jornada: entrada 07:15 + almoço 1h10 só cabe 8h45 até 17:10
+        assertEquals(h("08:45")..h("09:10"), f.jornada)
     }
 
     @Test
-    fun `padrao de sexta tem 8h e nenhuma saida minima`() {
+    fun `padrao de sexta tem 8h e saida entre 15h55 e 16h10`() {
         val f = faixas(sexta)
-        assertEquals(h("15:45")..h("16:35"), f.saida)
-        assertEquals(470..490, f.jornada)
+        assertEquals(h("15:55")..h("16:10"), f.saida)
+        assertEquals(h("07:45")..h("08:10"), f.jornada)
     }
 
     @Test
     fun `fim de semana usa a regra de segunda a quinta`() {
-        assertEquals(h("16:55")..h("17:35"), faixas(sabado).saida)
+        assertEquals(h("16:55")..h("17:10"), faixas(sabado).saida)
     }
 
     @Test
-    fun `saida minima na sexta quando ligada`() {
-        val cfg = Config.PADRAO.copy(saidaMinSextaAtiva = true, saidaMinSexta = h("16:00"))
-        assertEquals(h("16:00"), faixas(sexta, cfg).saida.first)
+    fun `com faixa de saida larga a jornada fica dentro da variacao`() {
+        val cfg = Config.PADRAO.copy(saidaMaxSemana = h("18:00"), saidaMinSexta = h("15:00"), saidaMaxSexta = h("17:00"))
+        assertEquals(h("08:50")..h("09:10"), faixas(segunda, cfg).jornada)
+        assertEquals(h("07:50")..h("08:10"), faixas(sexta, cfg).jornada)
     }
 
     @Test
@@ -83,6 +85,10 @@ class RegrasTest {
             setOf(Campo.ALMOCO_MAX, Campo.JORNADA_SEXTA, Campo.VARIACAO),
             Config.PADRAO.copy(almocoMax = 30, variacao = 90, jornadaSexta = 0).validar().keys,
         )
+        assertEquals(
+            setOf(Campo.SAIDA_MAX_SEMANA, Campo.SAIDA_MAX_SEXTA),
+            Config.PADRAO.copy(saidaMaxSemana = h("16:55"), saidaMaxSexta = h("15:00")).validar().keys,
+        )
     }
 
     @Test
@@ -93,7 +99,9 @@ class RegrasTest {
             "variacao": 10, "saida_min_semana": 1015, "saida_min_sexta_ativa": true, "saida_min_sexta": 955}"""
         val cfg = Config.deJson(python)
         assertEquals(510, cfg.jornadaSemana)
-        assertTrue(cfg.saidaMinSextaAtiva)
+        assertEquals(955, cfg.saidaMinSexta)
+        // Campos que não existiam na versão em Python ficam com o padrão
+        assertEquals(Config.PADRAO.saidaMaxSemana, cfg.saidaMaxSemana)
         assertEquals(cfg, Config.deJson(cfg.paraJson()))
     }
 

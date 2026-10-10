@@ -2,7 +2,7 @@
 
 App Android que gera horários de ponto aleatórios: Entrada – Saída almoço – Retorno – Saída.
 
-A partir da versão 2.0.0 o app é feito em **Kotlin** com Jetpack Compose (pasta `kotlin/`), com APK de cerca de 1,3 MB. A versão original em Python com [Flet](https://flet.dev) (pasta `src/`) continua no repositório como referência.
+A partir da versão 2.0.0 o app é feito em **Kotlin** com Jetpack Compose (pasta `kotlin/`), com APK de cerca de 1,3 MB. A versão original em Python com [Flet](https://flet.dev) (pasta `src/`) continua no repositório como referência, mas não recebe as novidades a partir da 2.1.0 (as regras abaixo são as da versão em Kotlin).
 
 ## Regras padrão
 
@@ -11,8 +11,8 @@ Todos estes valores podem ser alterados na tela de **Configurações** (engrenag
 - **Entrada:** entre 06:55 e 07:15.
 - **Saída almoço:** entre 11:55 e 12:10.
 - **Almoço:** de 1h00 a 1h10, então o retorno nunca fica antes de 12:55.
-- **Saída:** fecha 9h trabalhadas de segunda a quinta e 8h na sexta, com variação de ± 10 min (sem contar o almoço). De segunda a quinta, a saída nunca fica antes de 16:55.
-- **Saída mínima na sexta:** desligada por padrão; quando ligada, usa 15:55.
+- **Jornada:** 9h trabalhadas de segunda a quinta e 8h na sexta, com variação de ± 10 min (sem contar o almoço).
+- **Saída:** entre 16:55 e 17:10 de segunda a quinta, e entre 15:55 e 16:10 na sexta. A faixa da saída vence a jornada: se a jornada levaria a saída para fora dela, a saída fica no limite e a jornada do dia muda um pouco (por exemplo, 8h45 numa segunda com entrada às 07:15 e almoço de 1h10).
 
 O app abre com a data de hoje. Tocando na data dá para escolher outro dia no calendário, e a jornada segue o dia escolhido. O botão "Voltar para hoje" retorna à data automática.
 
