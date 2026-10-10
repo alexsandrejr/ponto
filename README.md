@@ -1,6 +1,8 @@
 # Ponto
 
-App Android feito em Python com [Flet](https://flet.dev) que gera horários de ponto aleatórios: Entrada – Saída almoço – Retorno – Saída.
+App Android que gera horários de ponto aleatórios: Entrada – Saída almoço – Retorno – Saída.
+
+A partir da versão 2.0.0 o app é feito em **Kotlin** com Jetpack Compose (pasta `kotlin/`), com APK de cerca de 1,3 MB. A versão original em Python com [Flet](https://flet.dev) (pasta `src/`) continua no repositório como referência.
 
 ## Regras padrão
 
@@ -16,7 +18,21 @@ O app abre com a data de hoje. Tocando na data dá para escolher outro dia no ca
 
 Os horários mínimos (06:55, 11:55, 12:55 e 16:55) seguem a orientação do RH: o ponto nunca é batido antes deles.
 
-## Rodar e gerar o APK
+## Gerar o APK (Kotlin)
+
+Precisa do JDK 17 e do Android SDK (o caminho do SDK vai em `kotlin/local.properties`, por exemplo `sdk.dir=C\:/Users/SEU_USUARIO/Android/sdk`).
+
+```powershell
+cd kotlin
+.\gradlew testDebugUnitTest   # testes das regras
+.\gradlew assembleRelease     # gera app\build\outputs\apk\release\app-release.apk
+```
+
+Para lançar uma versão nova, suba `versionCode` e `versionName` em `kotlin/app/build.gradle.kts`.
+
+O APK é assinado com a chave de debug (`~/.android/debug.keystore`), a mesma usada pelo `flet build`. Por isso a versão em Kotlin instala por cima da versão em Python e traz as configurações salvas nela.
+
+## Versão em Python (Flet)
 
 ```powershell
 python -m venv .venv
