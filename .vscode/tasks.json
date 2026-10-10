@@ -1,0 +1,79 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Rodar no emulador",
+            "detail": "Compila, abre o emulador se preciso, instala e abre o Ponto",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/.vscode/android.ps1", "rodar"],
+            "group": { "kind": "build", "isDefault": true },
+            "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+            "problemMatcher": [
+                {
+                    "owner": "kotlin",
+                    "source": "Kotlin",
+                    "fileLocation": "absolute",
+                    "severity": "error",
+                    "pattern": { "regexp": "^e: file:///(.+?):([0-9]+):([0-9]+) (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                },
+                {
+                    "owner": "kotlin",
+                    "source": "Kotlin",
+                    "fileLocation": "absolute",
+                    "severity": "warning",
+                    "pattern": { "regexp": "^w: file:///(.+?):([0-9]+):([0-9]+) (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                }
+            ]
+        },
+        {
+            "label": "Testar regras",
+            "detail": "Roda os testes automáticos das regras (sem emulador)",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/.vscode/android.ps1", "testar"],
+            "group": { "kind": "test", "isDefault": true },
+            "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+            "problemMatcher": [
+                {
+                    "owner": "kotlin",
+                    "source": "Kotlin",
+                    "fileLocation": "absolute",
+                    "severity": "error",
+                    "pattern": { "regexp": "^e: file:///(.+?):([0-9]+):([0-9]+) (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                },
+                {
+                    "owner": "kotlin",
+                    "source": "Kotlin",
+                    "fileLocation": "absolute",
+                    "severity": "warning",
+                    "pattern": { "regexp": "^w: file:///(.+?):([0-9]+):([0-9]+) (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                }
+            ]
+        },
+        {
+            "label": "Gerar APK de release",
+            "detail": "Gera kotlin/app/build/outputs/apk/release/app-release.apk",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/.vscode/android.ps1", "apk"],
+            "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+            "problemMatcher": [
+                {
+                    "owner": "kotlin",
+                    "source": "Kotlin",
+                    "fileLocation": "absolute",
+                    "severity": "error",
+                    "pattern": { "regexp": "^e: file:///(.+?):([0-9]+):([0-9]+) (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                },
+                {
+                    "owner": "kotlin",
+                    "source": "Kotlin",
+                    "fileLocation": "absolute",
+                    "severity": "warning",
+                    "pattern": { "regexp": "^w: file:///(.+?):([0-9]+):([0-9]+) (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                }
+            ]
+        }
+    ]
+}
